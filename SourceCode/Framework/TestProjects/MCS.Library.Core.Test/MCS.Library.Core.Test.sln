@@ -3,12 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MCS.Library.Core.Test", "MCS.Library.Core.Test\MCS.Library.Core.Test.xproj", "{24CAB044-699A-4266-A663-AA91A5DCE5EA}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MCS.Library.Core.Test", "MCS.Library.Core.Test.xproj", "{24CAB044-699A-4266-A663-AA91A5DCE5EA}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CCEC914A-A70F-44F6-A874-575FD67AE1AF} = {CCEC914A-A70F-44F6-A874-575FD67AE1AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCS.Library.Core", "..\MCS.Library.Core\MCS.Library.Core.csproj", "{CCEC914A-A70F-44F6-A874-575FD67AE1AF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCS.Library.Core", "..\..\MCS.Library.Core\MCS.Library.Core.csproj", "{CCEC914A-A70F-44F6-A874-575FD67AE1AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
