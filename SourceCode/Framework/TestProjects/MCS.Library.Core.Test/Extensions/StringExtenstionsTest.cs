@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using MCS.Library.Core.Extensions;
 
-namespace MCS.Library.Core.Test
+namespace MCS.Library.Core.Extensions.Test
 {
     public class StringExtenstionsTest
     {
