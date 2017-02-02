@@ -9,11 +9,14 @@
   "frameworks": {
     "netcoreapp1.0": {
       "dependencies": {
+        "System.Xml.XDocument": "4.3.0",
         "Microsoft.NETCore.App": {
           "type": "platform",
           "version": "1.1.0"
         }
       }
+    },
+    "net461": {
     }
   }
 }

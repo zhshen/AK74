@@ -1,15 +1,20 @@
-﻿{
-  "version": "1.0.0-*",
-
+{
   "dependencies": {
-    "NETStandard.Library": "1.6.0"
+    "NETStandard.Library": "1.6.1"
   },
-
   "frameworks": {
     "netstandard1.6": {
+      "dependencies": {
+        "System.Xml.XDocument": "4.3.0"
+      },
       "imports": "dnxcore50"
     },
     "net461": {
+      "frameworkAssemblies": {
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
+      }
     }
-  }
+  },
+  "version": "1.0.0-*"
 }
