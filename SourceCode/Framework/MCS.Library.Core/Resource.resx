@@ -174,30 +174,6 @@
   <data name="ReflectedPropertyTokenNotFound" xml:space="preserve">
     <value>&lt;Error: property {0} not found&gt;</value>
   </data>
-  <data name="String" xml:space="preserve">
-    <value>Title: {title}</value>
-  </data>
-  <data name="String1" xml:space="preserve">
-    <value>EventID: {eventid}</value>
-  </data>
-  <data name="String2" xml:space="preserve">
-    <value>Message: {message}</value>
-  </data>
-  <data name="String3" xml:space="preserve">
-    <value>Priority: {priority}</value>
-  </data>
-  <data name="String4" xml:space="preserve">
-    <value>EventType: {eventtype}</value>
-  </data>
-  <data name="String5" xml:space="preserve">
-    <value>StackTrace: {newline}{stacktrace}</value>
-  </data>
-  <data name="String6" xml:space="preserve">
-    <value>Machine: {machine}</value>
-  </data>
-  <data name="String7" xml:space="preserve">
-    <value>Extended Properties: {newline}{dictionary({key} - {value}{newline})}</value>
-  </data>
   <data name="StringParamCanNotBeNullOrEmpty" xml:space="preserve">
     <value>字符串参数{0}不能为Null或空串</value>
   </data>
