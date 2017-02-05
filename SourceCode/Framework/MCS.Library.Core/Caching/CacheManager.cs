@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MCS.Library.Core.Extensions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,14 @@ namespace MCS.Library.Core.Caching
         [ThreadStatic]
         private static bool inScavengeThread = false;
 
+        private static object parametersSyncObject = new object();
+
+        private static TimeSpan defaultScanvageInterval = TimeSpan.FromSeconds(180);
+
+        private static object statusSyncObject = new object();
+
+        private static DateTime lastestScanvageUtcTime;
+
         //private static CachingPerformanceCounters totalCounters = null;
 
         static CacheManager()
@@ -28,6 +37,36 @@ namespace MCS.Library.Core.Caching
             //后台清理线程，定期清理整个应用域中每一个CacheQueue中的每一个Cache项
             //此线程在系统启动时自动启动，不受客户端代码控制
             InitScavengingThread();
+        }
+
+        /// <summary>
+        /// 最后清理时间(Utc)
+        /// </summary>
+        public static DateTime LastestScanvageUtcTime
+        {
+            get
+            {
+                return statusSyncObject.DoSyncFunc(() => lastestScanvageUtcTime);
+            }
+            private set
+            {
+                statusSyncObject.DoSyncAction(() => lastestScanvageUtcTime = DateTime.UtcNow);
+            }
+        }
+
+        /// <summary>
+        /// 默认轮询间隔
+        /// </summary>
+        public static TimeSpan DefaultScanvageInterval
+        {
+            get
+            {
+                return parametersSyncObject.DoSyncFunc(() => defaultScanvageInterval);
+            }
+            set
+            {
+                parametersSyncObject.DoSyncAction(() => defaultScanvageInterval = value);
+            }
         }
 
         /// <summary>
@@ -135,9 +174,9 @@ namespace MCS.Library.Core.Caching
         /// <summary>
         /// 启动一个清理线程，完成一次清理工作
         /// </summary>
-        public static Task StartScavengeThread()
+        public async static Task StartScavengeTask()
         {
-            return Task.Run(() => InternalScavenge());
+            await Task.Run(() => InternalScavenge());
         }
 
         /// <summary>
@@ -146,13 +185,13 @@ namespace MCS.Library.Core.Caching
         /// <returns></returns>
         private static Task InitScavengingThread()
         {
-            return Task.Run(() => ScavengeCache());
+            return Task.Run(() => DurableScavengeCache());
         }
 
         /// <summary>
         /// CacheQueue的清理方法
         /// </summary>
-        private static void ScavengeCache()
+        private static void DurableScavengeCache()
         {
             while (true)
             {
@@ -160,7 +199,7 @@ namespace MCS.Library.Core.Caching
                 {
                     //清理周期，在配置文件中进行设置
                     //Thread.Sleep(CacheSettingsSection.GetConfig().ScanvageInterval);
-                    Task.Delay(180 * 1000).Wait();
+                    Task.Delay(DefaultScanvageInterval).Wait();
 
                     InternalScavenge();
                 }
@@ -199,6 +238,8 @@ namespace MCS.Library.Core.Caching
                 }
             }
 
+            LastestScanvageUtcTime = DateTime.UtcNow;
+ 
             //CacheManager.totalCounters.EntriesCounter.RawValue = totalCount;
         }
     }
