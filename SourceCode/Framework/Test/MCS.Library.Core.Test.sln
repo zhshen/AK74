@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MCS.Library.Core.Test", "MCS.Library.Core.Test.xproj", "{24CAB044-699A-4266-A663-AA91A5DCE5EA}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MCS.Library.Core.Test", ".\MCS.Library.Core.Test\MCS.Library.Core.Test.xproj", "{24CAB044-699A-4266-A663-AA91A5DCE5EA}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MCS.Library.Core", "..\..\MCS.Library.Core\MCS.Library.Core.xproj", "{469957EC-AD27-4B37-BAF4-EF408346B14F}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MCS.Library.Core", "..\Src\MCS.Library.Core\MCS.Library.Core.xproj", "{469957EC-AD27-4B37-BAF4-EF408346B14F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77D20AD8-9D8F-4D65-BC10-73589D84D21E}"
 	ProjectSection(SolutionItems) = preProject
