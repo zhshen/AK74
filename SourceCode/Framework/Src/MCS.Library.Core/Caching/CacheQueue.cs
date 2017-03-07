@@ -135,6 +135,8 @@ namespace MCS.Library.Core.Caching
         {
             return this.DoReadFunc(() =>
             {
+                key = ConvertCacheKey(key);
+
                 this.InnerDictionary.MaxLength = this.MaxLength;
 
                 //先删除已经存在而且过期的Cache项
@@ -191,6 +193,8 @@ namespace MCS.Library.Core.Caching
                     //this.TotalCounters.HitRatioBaseCounter.Increment();
                     //this.Counters.HitRatioBaseCounter.Increment();
 
+                    key = ConvertCacheKey(key);
+
                     CacheItem<TKey, TValue> item = this.DoReadFunc(() => this.InnerDictionary[key]);
 
                     this.DoWriteAction(() =>
@@ -221,6 +225,8 @@ namespace MCS.Library.Core.Caching
             {
                 this.DoWriteAction(() =>
                 {
+                    key = ConvertCacheKey(key);
+
                     CacheItem<TKey, TValue> item;
 
                     if (InnerDictionary.TryGetValue(key, out item) == false)
@@ -248,63 +254,9 @@ namespace MCS.Library.Core.Caching
         /// </remarks>
         public bool TryGetValue(TKey key, out TValue data)
         {
-            data = default(TValue);
-            CacheItem<TKey, TValue> item;
-            bool result;
+            key = ConvertCacheKey(key);
 
-            //this.TotalCounters.HitRatioBaseCounter.Increment();
-            //this.Counters.HitRatioBaseCounter.Increment();
-
-            this.rWLock.EnterReadLock();
-            try
-            {
-                //读操作时，也会修改字典（调整次序），因此需要锁住字典，进行并发控制
-                lock (InnerDictionary.SyncRoot)
-                {
-                    result = InnerDictionary.TryGetValue(key, out item);
-                }
-            }
-            finally
-            {
-                this.rWLock.ExitReadLock();
-            }
-
-            if (result)
-            {
-                this.rWLock.EnterWriteLock();
-                try
-                {
-                    //判断cache项是否过期
-                    if (this.GetDependencyChanged(key, item))
-                        result = false;
-                    else
-                    {
-                        data = item.Value;
-                        //修改Cache项的最后访问时间
-                        if (item.Dependency != null)
-                            item.Dependency.UtcLastAccessTime = DateTime.UtcNow;
-                    }
-                }
-                finally
-                {
-                    this.rWLock.ExitWriteLock();
-                }
-            }
-
-            //if (result)
-            //{
-            //    this.TotalCounters.HitsCounter.Increment();
-            //    this.TotalCounters.HitRatioCounter.Increment();
-            //    this.Counters.HitsCounter.Increment();
-            //    this.Counters.HitRatioCounter.Increment();
-            //}
-            //else
-            //{
-            //    this.TotalCounters.MissesCounter.Increment();
-            //    this.Counters.MissesCounter.Increment();
-            //}
-
-            return result;
+            return this.InnerTryGetValue(key, out data);
         }
 
         /// <summary>
@@ -315,13 +267,15 @@ namespace MCS.Library.Core.Caching
         /// <returns>Cache项的值</returns>
         public TValue GetOrAddNewValue(TKey key, CacheItemNotExistsAction action)
         {
+            key = ConvertCacheKey(key);
+
             TValue result;
 
-            if (TryGetValue(key, out result) == false)
+            if (this.InnerTryGetValue(key, out result) == false)
             {
                 lock (this.syncRoot)
                 {
-                    if (TryGetValue(key, out result) == false)
+                    if (this.InnerTryGetValue(key, out result) == false)
                         result = action(this, key);
                 }
             }
@@ -340,6 +294,8 @@ namespace MCS.Library.Core.Caching
         {
             this.DoWriteAction(() =>
             {
+                key = ConvertCacheKey(key);
+
                 CacheItem<TKey, TValue> item;
 
                 if (InnerDictionary.TryGetValue(key, out item))
@@ -373,6 +329,8 @@ namespace MCS.Library.Core.Caching
 
             return this.DoReadFunc(() =>
             {
+                key = ConvertCacheKey(key);
+
                 bool result = ((InnerDictionary.ContainsKey(key) &&
                             ((CacheItem<TKey, TValue>)InnerDictionary[key]).Dependency == null) ||
                                 (InnerDictionary.ContainsKey(key) &&
@@ -443,6 +401,77 @@ namespace MCS.Library.Core.Caching
                 foreach (KeyValuePair<TKey, CacheItem<TKey, TValue>> kp in keysToRemove)
                     this.InnerRemove(kp.Key, kp.Value);
             });
+        }
+
+        /// <summary>
+        /// 转换Cache Key，例如大小写
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        protected virtual TKey ConvertCacheKey(TKey key)
+        {
+            return key;
+        }
+
+        private bool InnerTryGetValue(TKey key, out TValue data)
+        {
+            data = default(TValue);
+            CacheItem<TKey, TValue> item;
+            bool result;
+
+            //this.TotalCounters.HitRatioBaseCounter.Increment();
+            //this.Counters.HitRatioBaseCounter.Increment();
+
+            this.rWLock.EnterReadLock();
+            try
+            {
+                //读操作时，也会修改字典（调整次序），因此需要锁住字典，进行并发控制
+                lock (InnerDictionary.SyncRoot)
+                {
+                    result = InnerDictionary.TryGetValue(key, out item);
+                }
+            }
+            finally
+            {
+                this.rWLock.ExitReadLock();
+            }
+
+            if (result)
+            {
+                this.rWLock.EnterWriteLock();
+                try
+                {
+                    //判断cache项是否过期
+                    if (this.GetDependencyChanged(key, item))
+                        result = false;
+                    else
+                    {
+                        data = item.Value;
+                        //修改Cache项的最后访问时间
+                        if (item.Dependency != null)
+                            item.Dependency.UtcLastAccessTime = DateTime.UtcNow;
+                    }
+                }
+                finally
+                {
+                    this.rWLock.ExitWriteLock();
+                }
+            }
+
+            //if (result)
+            //{
+            //    this.TotalCounters.HitsCounter.Increment();
+            //    this.TotalCounters.HitRatioCounter.Increment();
+            //    this.Counters.HitsCounter.Increment();
+            //    this.Counters.HitRatioCounter.Increment();
+            //}
+            //else
+            //{
+            //    this.TotalCounters.MissesCounter.Increment();
+            //    this.Counters.MissesCounter.Increment();
+            //}
+
+            return result;
         }
 
         private bool GetDependencyChanged(TKey key, CacheItem<TKey, TValue> item)

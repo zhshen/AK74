@@ -76,6 +76,8 @@ namespace MCS.Library.Core.Caching
         {
             return this.DoWriteFunc(() =>
             {
+                key = ConvertCacheKey(key);
+
                 if (this.innerDictionary.ContainsKey(key) &&
                     ((CacheItem<TKey, TValue>)this.innerDictionary[key]).Dependency != null &&
                     ((CacheItem<TKey, TValue>)this.innerDictionary[key]).Dependency.HasChanged)
@@ -123,6 +125,8 @@ namespace MCS.Library.Core.Caching
         {
             get
             {
+                key = ConvertCacheKey(key);
+
                 //this.TotalCounters.HitRatioBaseCounter.Increment();
                 //this.Counters.HitRatioBaseCounter.Increment();
 
@@ -147,6 +151,8 @@ namespace MCS.Library.Core.Caching
             {
                 this.DoWriteAction(() =>
                 {
+                    key = ConvertCacheKey(key);
+
                     CacheItem<TKey, TValue> item = this.innerDictionary[key];
 
                     item.Value = value;
@@ -173,6 +179,8 @@ namespace MCS.Library.Core.Caching
 
             return this.DoReadFunc(() =>
             {
+                key = ConvertCacheKey(key);
+
                 bool result = ((this.innerDictionary.ContainsKey(key) &&
                         ((CacheItem<TKey, TValue>)this.innerDictionary[key]).Dependency == null) ||
                         (this.innerDictionary.ContainsKey(key) &&
@@ -208,57 +216,9 @@ namespace MCS.Library.Core.Caching
         /// </remarks>
         public bool TryGetValue(TKey key, out TValue data)
         {
-            data = default(TValue);
-            CacheItem<TKey, TValue> item;
-            bool result;
+            key = ConvertCacheKey(key);
 
-            //this.TotalCounters.HitRatioBaseCounter.Increment();
-            //this.Counters.HitRatioBaseCounter.Increment();
-
-            this.rWLock.EnterReadLock();
-            try
-            {
-                result = this.innerDictionary.TryGetValue(key, out item);
-            }
-            finally
-            {
-                this.rWLock.ExitReadLock();
-            }
-
-            if (result)
-            {
-                this.rWLock.EnterWriteLock();
-                try
-                {
-                    if (this.GetDependencyChanged(key, item))
-                        result = false;
-                    else
-                    {
-                        data = item.Value;
-                        if (item.Dependency != null)
-                            item.Dependency.UtcLastAccessTime = DateTime.UtcNow;
-                    }
-                }
-                finally
-                {
-                    this.rWLock.ExitWriteLock();
-                }
-            }
-
-            //if (result)
-            //{
-            //    this.TotalCounters.HitsCounter.Increment();
-            //    this.TotalCounters.HitRatioCounter.Increment();
-            //    this.Counters.HitsCounter.Increment();
-            //    this.Counters.HitRatioCounter.Increment();
-            //}
-            //else
-            //{
-            //    this.TotalCounters.MissesCounter.Increment();
-            //    this.Counters.MissesCounter.Increment();
-            //}
-
-            return result;
+            return this.InnerTryGetValue(key, out data);
         }
 
         /// <summary>
@@ -269,13 +229,15 @@ namespace MCS.Library.Core.Caching
         /// <returns>Cache项的值</returns>
         public TValue GetOrAddNewValue(TKey key, PortableCacheItemNotExistsAction action)
         {
+            key = ConvertCacheKey(key);
+
             TValue result;
 
-            if (TryGetValue(key, out result) == false)
+            if (this.InnerTryGetValue(key, out result) == false)
             {
                 lock (this.syncRoot)
                 {
-                    if (TryGetValue(key, out result) == false)
+                    if (this.InnerTryGetValue(key, out result) == false)
                         result = action(this, key);
                 }
             }
@@ -294,6 +256,8 @@ namespace MCS.Library.Core.Caching
         {
             this.DoWriteAction(() =>
             {
+                key = ConvertCacheKey(key);
+
                 CacheItem<TKey, TValue> item;
 
                 if (this.innerDictionary.TryGetValue(key, out item))
@@ -376,6 +340,71 @@ namespace MCS.Library.Core.Caching
                     result.Add(kp.Value.ToCacheItemInfo());
                 }
             });
+
+            return result;
+        }
+
+        /// <summary>
+        /// 转换Cache Key，例如大小写
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        protected virtual TKey ConvertCacheKey(TKey key)
+        {
+            return key;
+        }
+
+        private bool InnerTryGetValue(TKey key, out TValue data)
+        {
+            data = default(TValue);
+            CacheItem<TKey, TValue> item;
+            bool result;
+
+            //this.TotalCounters.HitRatioBaseCounter.Increment();
+            //this.Counters.HitRatioBaseCounter.Increment();
+
+            this.rWLock.EnterReadLock();
+            try
+            {
+                result = this.innerDictionary.TryGetValue(key, out item);
+            }
+            finally
+            {
+                this.rWLock.ExitReadLock();
+            }
+
+            if (result)
+            {
+                this.rWLock.EnterWriteLock();
+                try
+                {
+                    if (this.GetDependencyChanged(key, item))
+                        result = false;
+                    else
+                    {
+                        data = item.Value;
+                        if (item.Dependency != null)
+                            item.Dependency.UtcLastAccessTime = DateTime.UtcNow;
+                    }
+                }
+                finally
+                {
+                    this.rWLock.ExitWriteLock();
+                }
+            }
+
+            //if (result)
+            //{
+            //    this.TotalCounters.HitsCounter.Increment();
+            //    this.TotalCounters.HitRatioCounter.Increment();
+            //    this.Counters.HitsCounter.Increment();
+            //    this.Counters.HitRatioCounter.Increment();
+            //}
+            //else
+            //{
+            //    this.TotalCounters.MissesCounter.Increment();
+            //    this.Counters.MissesCounter.Increment();
+            //}
 
             return result;
         }
